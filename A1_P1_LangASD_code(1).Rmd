@@ -39,6 +39,8 @@ Set the working directory (the directory with your data and code for these assig
 
 ```{r}
 
+setwd("~/Documents/Aarhus/3. Semester/2. Experimental Methods 3/Assignments/Assignment1")
+
 ```
 
 Load the three data sets, after downloading them from dropbox and saving them in your working directory:
@@ -47,6 +49,10 @@ Load the three data sets, after downloading them from dropbox and saving them in
 * Word data: https://www.dropbox.com/s/8ng1civpl2aux58/token_train.csv?dl=0
 
 ```{r}
+
+data1 = read.csv("demo_train(1).csv")
+data2 = read.csv("LU_train.csv")
+data3 = read.csv("token_train.csv")
 
 ```
 
@@ -65,6 +71,10 @@ Tip: Look into the package data.table, or google "how to rename variables in R"
 
 ```{r}
 
+library(plyr)
+data1 = plyr::rename(data1, c("Child.ID" = "SUBJ"))
+data1 = plyr::rename(data1, c("Visit" = "VISIT"))
+
 ```
 
 2b. Find a way to homogeneize the way "visit" is reported. If you look into the original data sets, you will see that in the LU data and the Token data, Visits are called "visit 1" in stead of just 1 (which is the case in the demographic data set).
@@ -72,6 +82,9 @@ Tip: There is a package called stringr, which will be very handy for you also in
 
 ```{r}
 
+library(stringr)
+data2$VISIT = str_extract_all(data2$VISIT, "\\d")
+data3$VISIT = str_extract_all(data3$VISIT, "\\d")
 
 ```
 
@@ -87,6 +100,10 @@ Tip: You will have to do identical work for both data sets, so to save time on t
 
 
 ```{r}
+
+data1$SUBJ = gsub("\\.", "", data1$SUBJ)
+data2$SUBJ = gsub("\\.", "", data2$SUBJ)
+data3$SUBJ = gsub("\\.", "", data3$SUBJ)
 
 ```
 
@@ -106,6 +123,12 @@ It would be smart to rename the MullenRaw and ExpressiveLangRaw into something y
 
 ```{r}
 
+library(tidyverse)
+alldata1 = select(data1, SUBJ, VISIT, Ethnicity, Diagnosis, Gender, Age, ADOS, MullenRaw, ExpressiveLangRaw)
+alldata2 = select(data2, SUBJ, VISIT, MOT_MLU, MOT_LUstd, CHI_MLU, CHI_LUstd)
+alldata3 = select(data3, SUBJ, VISIT, types_MOT, types_CHI, tokens_MOT, tokens_CHI)
+
+alldata1 = plyr::rename(alldata1, c("MullenRaw" = "nonVerbalIQ", "ExpressiveLangRaw" = "verbalIQ"))
 
 ```
 
@@ -116,6 +139,9 @@ Tip: Merge only works for two data frames at the time.
 Tip: Check the number of observations in the datasets before and after merging. What is going on?
 
 ```{r}
+
+dataa = merge(alldata1, alldata2, by = c("SUBJ", "VISIT"))
+alldata = merge(dataa, alldata3, by = c("SUBJ", "VISIT"))
 
 ```
 
@@ -131,6 +157,10 @@ Tip: the final dataset should have as many rows as the the old one.
 
 ```{r}
 
+subset = subset(alldata, VISIT == "1", select = c(SUBJ, ADOS, nonVerbalIQ, verbalIQ))
+subset = plyr::rename(subset, c("ADOS" = "ADOS1", "nonVerbalIQ" = "nonVerbalIQ1", "verbalIQ" = "verbalIQ1"))
+mergedData = merge(alldata, subset, by = c("SUBJ"))
+
 ```
 
 Now, we are almost ready to actually start working with the data. However, here are some additional finishing touches:
@@ -145,6 +175,15 @@ Tip: Google "how to rename levels in R".
 
 ```{r}
 
+mergedData$SUBJ = as.factor(mergedData$SUBJ)
+mergedData$SUBJ = as.numeric(mergedData$SUBJ, levels = 61)
+
+mergedData$VISIT = as.numeric(mergedData$VISIT)
+
+mergedData$Gender = as.factor(mergedData$Gender)
+mergedData$Gender = revalue(mergedData$Gender, c("1" = "M", "2" = "F"))
+
+mergedData$Diagnosis = revalue(mergedData$Diagnosis, c("A" = "ASD", "B" = "TD"))
 
 ```
 
@@ -152,6 +191,8 @@ Tip: Google "how to rename levels in R".
 Save the data set using into a csv file. Hint: look into write.csv()
 
 ```{r}
+
+write.csv(mergedData, file = "cleanData.csv")
 
 ```
 
