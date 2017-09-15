@@ -38,23 +38,38 @@ Describe the participant samples in the dataset (e.g. by diagnosis, age, etc.). 
 
 Most of the variables were well-balanced in accordance with diagnosis, however, when making the model where Age is predicted by Diagnosis, we saw that the mean age of children with ASD was significantly different from the mean age of children who are typically developing. On average children with ASD were 12.67 months older than TD children. 
 
-However, since the focus of the experiment is that of language development an interesting variable is child MLU. From the model we can tell that the groups are well-balanced. That is, the MLU from the first visit is not significantly different across the two groups. This tells us that children with ASD are approximately one year behind language wise from TD children. 
+However, since the focus of the experiment is that of language development an interesting variable is child MLU. From the model we can tell that the groups are well-balanced. That is, the MLU from the first visit is not significantly different across the two groups. 
+
 
 
 ### Exercise 2) Children learning language: the effects of time and ASD
 Describe linguistic development in TD and ASD children in terms of Mean Length of Utterance (MLU)?
 
-[HERE GOES YOUR ANSWER]
+Time had a significantly positive effect on child MLU, (ß = 0.234, se = 0.245, t-value = 9.516, p < .05)
+
+Diagnosis did not significantly affect child MLU, (X2(1) = 2.018, p = .156). 
+
+R2 = 0.803 
+
 
 ### Exercise 3) Child directed speech as a moving target
 Describe how parental use of language changes over time in terms of MLU. What do you think is going on?
 
-[HERE GOES YOUR ANSWER]
+Time had a significantly positive effect on parental MLU, (ß = 0.12, se = 0.018, t-value = 6.595, p < .05)
+
+Diagnosis also had a significantly positive effect on parental MLU, (ß = 0.502, se = 0.113, t-value = 4.429, p < .05)
+
+Diagnosis affected parental MLU, (X2(1) = 16.728, p < .05), increasing MLU by 0.502 ± 0.133 se. 
+
+R2 = 0.676 
+
 
 ### Exercise 4) Looking into "individual differences" (demographic, clinical or cognitive profiles)
 The dataset contains some additional variables characterizing the kids’ cognitive and clinical profile: ADOS (autism severity), MSEL EL (Expressive Language, that is, verbal IQ, or linguistic skills at first visit as assessed by a psychologist using Mullen Scales of Early Learning), MSEL VR (Visual Reception, used as a proxy for non verbal IQ at first visit), Age, Gender, Ethnicity. Would it make sense to add any of them to your model of linguistic trajectories? Create the best possible model (the one that best explain the data, with MLU as outcome). Next time your model will be tested on new participants, and we will proclaim a winner. Describe your strategy to select the best models (how did you choose the variables to include?) and send the code to Riccardo and Celine.
 
-[HERE GOES YOUR ANSWER]
+We have decided to add 3 more fixed effects to the model and remove one - diagnosis. We decided to keep visit, since it explained a lot in the previous models. Diagnosis, however, did not. Then we decided to add verbalIQ. It seems important because it indicates the linguistic skills of the first visit of the child. We chose to add MOT_MLU because we expect the parental MLU to have an influence on the child's MLU. That is, a larger parental MLU will likely lead to a larger child MLU. Lastly, we added types_CHI, which is the use of unique words of the child. We expect that children who use many unique words will be more likely to have better linguistics skills and therefore longer utterances. 
+
+
 
 ### [OPTIONAL] Exercise 5) Comment on how the three linguistic variables measure linguistic performance (the so-called "construct validity" of the measures). Do they express the same variance?
 
@@ -163,7 +178,7 @@ Remember to plot the data first and then to run a statistical test.
 
 ```{r}
 
-memodel = lmer(CHI_MLU ~ 1 + Diagnosis + VISIT + (1+VISIT|SUBJ), data = Data1, REML = FALSE)
+memodel = lmer(CHI_MLU ~ 1 + VISIT + Diagnosis + (1+VISIT|SUBJ), REML = FALSE, Data1)
 summary(memodel)
 
 ```
@@ -174,12 +189,11 @@ How would you evaluate whether the model is a good model?
 
 plot(memodel)
 
-null = lmer(CHI_MLU ~ 1 + VISIT + (1+VISIT|SUBJ), data = Data1, REML = FALSE)
+null1 = lmer(CHI_MLU ~ 1 + VISIT + (1+VISIT|SUBJ), data = Data1, REML = FALSE)
 
-anova(null, memodel)
+anova(null1, memodel)
 
 r.squaredGLMM(memodel)
-
 
 ```
 
@@ -188,10 +202,11 @@ Remember: a growth curve model assesses whether changes in time can be described
 First build the different models, then compare them to see which one is better
 
 ```{r}
+
 Data1$VISIT = as.factor(Data1$VISIT)
 
 contrasts(Data1$VISIT) = contr.poly(6)
-model = aov(CHI_MLU ~ VISIT, Data1)
+model = aov(CHI_MLU ~ 1 + Diagnosis + VISIT + (1+VISIT|SUBJ), Data1, REML = FALSE)
 summary.lm(model)
 
 ```
@@ -211,6 +226,19 @@ Linguistic development of children MLU is affected by ... [COMPLETE]
 
 ```{r}
 
+Data1$VISIT = as.integer(Data1$VISIT)
+
+memodel2 = lmer(MOT_MLU ~ 1 + VISIT + Diagnosis + (1+VISIT|SUBJ), REML = FALSE, Data1)
+summary(memodel2)
+
+plot(memodel2)
+
+null2 = lmer(MOT_MLU ~ 1 + VISIT + (1+VISIT|SUBJ), data = Data1, REML = FALSE)
+
+anova(null2, memodel2)
+
+r.squaredGLMM(memodel2)
+
 ```
 
 [REPORT THE RESULTS]
@@ -222,6 +250,13 @@ Your task now is to figure out how to best describe the children linguistic traj
 
 ```{r}
 
+memodel3 = lmer(CHI_MLU ~ 1 + VISIT + verbalIQ1 + MOT_MLU + types_CHI + (1+VISIT|SUBJ), REML = FALSE, Data1)
+summary(memodel3)
+
+r.squaredGLMM(memodel3)
+
 ```
 
-REPORT OF THE RESULTS
+
+
+
